@@ -64,6 +64,18 @@ pub fn bind_text_area_keys(cx: &mut App) {
 }
 
 pub(crate) fn text_area_bindings() -> Vec<KeyBinding> {
+    #[cfg(target_os = "macos")]
+    macro_rules! sec {
+        ($k:expr) => {
+            concat!("cmd-", $k)
+        };
+    }
+    #[cfg(not(target_os = "macos"))]
+    macro_rules! sec {
+        ($k:expr) => {
+            concat!("ctrl-", $k)
+        };
+    }
     let ctx = Some(KEY_CONTEXT);
     vec![
         KeyBinding::new("backspace", Backspace, ctx),
@@ -76,10 +88,10 @@ pub(crate) fn text_area_bindings() -> Vec<KeyBinding> {
         KeyBinding::new("shift-right", SelectRight, ctx),
         KeyBinding::new("shift-up", SelectUp, ctx),
         KeyBinding::new("shift-down", SelectDown, ctx),
-        KeyBinding::new("secondary-a", SelectAll, ctx),
-        KeyBinding::new("secondary-v", Paste, ctx),
-        KeyBinding::new("secondary-c", Copy, ctx),
-        KeyBinding::new("secondary-x", Cut, ctx),
+        KeyBinding::new(sec!("a"), SelectAll, ctx),
+        KeyBinding::new(sec!("v"), Paste, ctx),
+        KeyBinding::new(sec!("c"), Copy, ctx),
+        KeyBinding::new(sec!("x"), Cut, ctx),
         KeyBinding::new("home", Home, ctx),
         KeyBinding::new("end", End, ctx),
         KeyBinding::new("shift-home", SelectHome, ctx),
@@ -297,8 +309,8 @@ impl TextArea {
         self.changed(cx);
     }
 
-    pub fn focus(&self, window: &mut Window) {
-        window.focus(&self.focus_handle);
+    pub fn focus(&self, window: &mut Window, cx: &mut App) {
+        window.focus(&self.focus_handle, cx);
     }
 
     pub fn is_focused(&self, window: &Window) -> bool {
@@ -408,7 +420,7 @@ impl TextArea {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        window.focus(&self.focus_handle);
+        window.focus(&self.focus_handle, cx);
         self.is_selecting = true;
         let offset = self.index_for_mouse_position(event.position);
         if event.modifiers.shift {
@@ -710,7 +722,7 @@ impl EntityInputHandler for TextArea {
 }
 
 /// The wrapped lines of the text (or the placeholder), one per hard line.
-#[derive(Clone)]
+#[derive(Default)]
 struct Layout {
     /// Byte offset where each hard line starts, and its wrapped layout.
     lines: Vec<(usize, WrappedLine)>,
@@ -827,14 +839,6 @@ struct BodyPaint {
     layout: Layout,
     selection: Vec<Bounds<Pixels>>,
     cursor: Option<Bounds<Pixels>>,
-}
-
-impl IntoElement for TextBody {
-    type Element = Self;
-
-    fn into_element(self) -> Self::Element {
-        self
-    }
 }
 
 impl TextBody {
@@ -1052,7 +1056,7 @@ impl Element for TextBody {
                 }
             }
         });
-        let layout = prepaint.layout.clone();
+        let layout = std::mem::take(&mut prepaint.layout);
         self.area.update(cx, |area, _| {
             area.layout = Some(layout);
             area.last_bounds = Some(bounds);

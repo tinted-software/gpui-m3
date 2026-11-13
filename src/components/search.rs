@@ -102,7 +102,7 @@ impl Search {
     /// Expands the search and moves the focus to the field.
     pub fn open(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         self.blur_pending = false;
-        self.field.read(cx).focus(window);
+        self.field.update(cx, |f, cx| f.focus(window, cx));
         if !self.expanded {
             self.expanded = true;
             cx.emit(SearchEvent::Opened);
@@ -129,7 +129,7 @@ impl Search {
     /// Empties the text and keeps the focus in the field.
     pub fn clear(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         self.field.update(cx, |field, cx| field.set_text("", cx));
-        self.field.read(cx).focus(window);
+        self.field.update(cx, |f, cx| f.focus(window, cx));
         cx.emit(SearchEvent::Cleared);
         cx.notify();
     }
@@ -313,7 +313,7 @@ impl RenderOnce for SearchBar {
             .search
             .update(cx, |search, _| std::mem::take(&mut search.blur_pending));
         if blur && focused {
-            window.blur();
+            window.blur(cx);
         }
 
         let state = use_interaction(&self.id, window, cx);
@@ -345,7 +345,7 @@ impl RenderOnce for SearchBar {
                 if open {
                     search.update(cx, |search, cx| search.open(window, cx));
                 } else {
-                    field.read(cx).focus(window);
+                    field.update(cx, |f, cx| f.focus(window, cx));
                 }
             })
             .into_any_element()

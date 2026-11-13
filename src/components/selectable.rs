@@ -124,7 +124,7 @@ impl TextSelection {
     pub fn edge_scroll_handle(&mut self, handle: ScrollHandle) {
         self.on_edge_scroll(move |delta, window, _| {
             let offset = handle.offset();
-            let top = (offset.y + delta).clamp(-handle.max_offset().height, px(0.));
+            let top = (offset.y + delta).clamp(-handle.max_offset().y, px(0.));
             handle.set_offset(point(offset.x, top));
             window.refresh();
         });
@@ -314,14 +314,6 @@ impl SelectionScope {
             scope: Selection { state, owner },
             child: Some(child.into_any_element()),
         }
-    }
-}
-
-impl IntoElement for SelectionScope {
-    type Element = Self;
-
-    fn into_element(self) -> Self {
-        self
     }
 }
 
@@ -567,13 +559,13 @@ pub fn selection_root(state: &Entity<TextSelection>, root: Div, cx: &App) -> Div
 fn on_key(state: &Entity<TextSelection>, event: &KeyDownEvent, cx: &mut App) {
     let keys = &event.keystroke;
     let key = keys.key.as_str();
-    if keys.modifiers.secondary() && key == "c" {
+    if keys.modifiers.secondary(cx) && key == "c" {
         let text = state.read(cx).selected_text();
         if !text.is_empty() {
             cx.write_to_clipboard(ClipboardItem::new_string(text));
             cx.stop_propagation();
         }
-    } else if keys.modifiers.secondary() && key == "a" {
+    } else if keys.modifiers.secondary(cx) && key == "a" {
         state.update(cx, |s, cx| {
             if s.select_all() {
                 cx.notify();
@@ -651,7 +643,7 @@ fn follow(state: &Entity<TextSelection>, window: &mut Window) {
         s.update(cx, |sel, _| sel.dragging = false);
         if s.read(cx).range().is_some() {
             let focus = s.read(cx).focus.clone();
-            window.focus(&focus);
+            window.focus(&focus, cx);
         }
     });
 }
@@ -800,7 +792,13 @@ pub fn selectable_block(
                 |_, _, _| (),
                 move |bounds, _, window, _| {
                     if let Some(range) = shown.borrow_mut().take() {
-                        paint_range(&wash_layout, bounds, range, alpha(color, color.a * 0.6), window);
+                        paint_range(
+                            &wash_layout,
+                            bounds,
+                            range,
+                            alpha(color, color.a * 0.6),
+                            window,
+                        );
                     }
                 },
             )
@@ -896,7 +894,7 @@ fn press(state: &Entity<TextSelection>, key: Key, hitbox: gpui::Hitbox, window: 
         });
         if s.read(cx).range().is_some() {
             let focus = s.read(cx).focus.clone();
-            window.focus(&focus);
+            window.focus(&focus, cx);
         }
     });
 }

@@ -291,7 +291,7 @@ pub fn continuous_at(fps: f32, window: &mut Window, cx: &mut App) -> f32 {
         cx.spawn(async move |cx| {
             timer.await;
             PENDING.with(|p| p.borrow_mut().remove(&view));
-            cx.update(|cx| cx.notify(view)).ok();
+            cx.update(|cx| cx.notify(view));
         })
         .detach();
     }
@@ -826,7 +826,7 @@ pub fn expand(
 }
 
 pub fn key(id: &ElementId, name: &'static str) -> ElementId {
-    ElementId::NamedChild(Box::new(id.clone()), name.into())
+    ElementId::NamedChild(std::sync::Arc::new(id.clone()), name.into())
 }
 
 #[cfg(test)]

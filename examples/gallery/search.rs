@@ -204,7 +204,8 @@ impl Render for SearchDemos {
         if !self.focused_filter {
             // So that the focus ring of the filter bar shows without a click.
             self.focused_filter = true;
-            self.filter.read(cx).field().read(cx).focus(window);
+            let field = self.filter.read(cx).field().clone();
+            field.update(cx, |f, cx| f.focus(window, cx));
         }
 
         let small = TopAppBar::new("tb-small")

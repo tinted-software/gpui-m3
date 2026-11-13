@@ -186,7 +186,10 @@ fn rise(progress: f32, k: usize) -> f32 {
 }
 
 fn item_key(id: &ElementId, index: usize) -> ElementId {
-    ElementId::NamedChild(Box::new(id.clone()), format!("item-{index}").into())
+    ElementId::NamedChild(
+        std::sync::Arc::new(id.clone()),
+        format!("item-{index}").into(),
+    )
 }
 
 impl RenderOnce for FabMenu {
@@ -216,7 +219,7 @@ impl RenderOnce for FabMenu {
         });
         if opened {
             // Escape reaches the menu through the focus.
-            window.focus(&handle);
+            window.focus(&handle, cx);
         }
         let since = timing.read(cx).changed.map_or(f32::MAX, |t| {
             now.duration_since(t).as_secs_f32() / motion.time_scale.max(0.01)

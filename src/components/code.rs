@@ -367,7 +367,7 @@ impl RenderOnce for CopyPill {
             let timer = cx.background_executor().timer(COPIED_FOR);
             cx.spawn(async move |cx| {
                 timer.await;
-                at.update(cx, |_, cx| cx.notify()).ok();
+                at.update(cx, |_, cx| cx.notify());
             })
             .detach();
         })

@@ -459,7 +459,7 @@ impl RenderOnce for TimePicker {
             let asked = window.use_keyed_state(key(&id, "autofocus"), cx, |_, _| false);
             if !*asked.read(cx) {
                 asked.update(cx, |asked, _| *asked = true);
-                window.focus(&handle);
+                window.focus(&handle, cx);
             }
         }
         let (part, input, dragging) = {
@@ -495,7 +495,7 @@ impl RenderOnce for TimePicker {
                         st.input
                     });
                     if typing {
-                        window.focus(&click_field);
+                        window.focus(&click_field, cx);
                     }
                 })
                 .on_key_down(move |event, window, cx| {
@@ -744,7 +744,7 @@ impl RenderOnce for TimePicker {
                     st.input
                 });
                 if typing {
-                    window.focus(&hour_field);
+                    window.focus(&hour_field, cx);
                 }
             })
         });

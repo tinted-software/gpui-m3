@@ -50,7 +50,7 @@ impl Render for Smoke {
 }
 
 fn main() {
-    Application::new()
+    gpui_platform::application()
         .with_assets(gpui_m3::Assets)
         .run(|cx: &mut App| {
             gpui_m3::init(cx);

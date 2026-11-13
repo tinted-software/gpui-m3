@@ -189,8 +189,8 @@ impl ImageCropper {
         self.framing
     }
 
-    pub fn focus(&self, window: &mut Window) {
-        window.focus(&self.focus_handle);
+    pub fn focus(&self, window: &mut Window, cx: &mut App) {
+        window.focus(&self.focus_handle, cx);
     }
 
     fn image_size(&self) -> (f32, f32) {
@@ -248,7 +248,7 @@ impl ImageCropper {
     }
 
     fn on_mouse_down(&mut self, e: &MouseDownEvent, window: &mut Window, cx: &mut Context<Self>) {
-        window.focus(&self.focus_handle);
+        window.focus(&self.focus_handle, cx);
         self.drag = Some((e.position, self.framing));
         cx.notify();
     }
@@ -319,7 +319,14 @@ impl Render for ImageCropper {
                     Bounds::new(bounds.origin + point(px(f.x), px(f.y)), size(px(w), px(h)));
                 window.with_content_mask(Some(gpui::ContentMask { bounds }), |window| {
                     window
-                        .paint_image(image_bounds, Corners::default(), image, 0, false)
+                        .paint_image(
+                            image_bounds,
+                            image_bounds,
+                            Corners::default(),
+                            image,
+                            0,
+                            false,
+                        )
                         .ok();
                     // Dim everything outside the shape: the view rectangle with the shape cut out.
                     let points = Morph::still(shape).points(bounds);

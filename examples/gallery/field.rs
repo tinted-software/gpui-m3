@@ -222,7 +222,7 @@ impl Render for FieldDemos {
             } else {
                 &self.filled
             };
-            cells[1].1.read(cx).focus(window);
+            cells[1].1.update(cx, |f, cx| f.focus(window, cx));
         }
         let show = |part: usize| self.part.is_none_or(|p| p == part);
         let caption = s.on_surface_variant;

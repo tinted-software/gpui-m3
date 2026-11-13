@@ -42,22 +42,20 @@ pub fn animate_scheme(scheme: Scheme, dark: bool, cx: &mut App) {
             cx.background_executor()
                 .timer(Duration::from_millis(16))
                 .await;
-            let done = cx
-                .update(|cx| {
-                    if cx.global::<SchemeBlend>().0 != generation {
-                        return true;
-                    }
-                    let t = (elapsed(start, cx) / SCHEME_BLEND).min(1.);
-                    let current = from.lerp(&scheme, ease(t));
-                    cx.set_global(Theme {
-                        scheme: current,
-                        dark,
-                        seed: None,
-                    });
-                    cx.refresh_windows();
-                    t >= 1.
-                })
-                .unwrap_or(true);
+            let done = cx.update(|cx| {
+                if cx.global::<SchemeBlend>().0 != generation {
+                    return true;
+                }
+                let t = (elapsed(start, cx) / SCHEME_BLEND).min(1.);
+                let current = from.lerp(&scheme, ease(t));
+                cx.set_global(Theme {
+                    scheme: current,
+                    dark,
+                    seed: None,
+                });
+                cx.refresh_windows();
+                t >= 1.
+            });
             if done {
                 break;
             }
@@ -83,8 +81,7 @@ pub fn animate_theme(dark: bool, seed: Option<Hsla>, cx: &mut App) {
                 if current == generation && theme.scheme == target.scheme {
                     cx.set_global(Theme { seed, ..theme });
                 }
-            })
-            .ok();
+            });
         })
         .detach();
     }

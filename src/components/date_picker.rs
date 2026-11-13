@@ -767,7 +767,7 @@ fn date_key(date: Date) -> u32 {
 }
 
 fn cell_id(id: &ElementId, part: &'static str, n: u32) -> ElementId {
-    ElementId::NamedChild(Box::new(key(id, part)), n.to_string().into())
+    ElementId::NamedChild(std::sync::Arc::new(key(id, part)), n.to_string().into())
 }
 
 /// How a day looks.
@@ -808,7 +808,7 @@ impl RenderOnce for DatePicker {
             let asked = window.use_keyed_state(key(&id, "autofocus"), cx, |_, _| false);
             if !*asked.read(cx) {
                 asked.update(cx, |asked, _| *asked = true);
-                window.focus(&handle);
+                window.focus(&handle, cx);
             }
         }
 
@@ -840,7 +840,7 @@ impl RenderOnce for DatePicker {
                 if !enabled(date) {
                     return;
                 }
-                window.focus(&handle);
+                window.focus(&handle, cx);
                 let range = state.update(cx, |st, cx| {
                     st.cursor = Some(date);
                     st.show_month(date.year, date.month);
@@ -1028,7 +1028,7 @@ impl RenderOnce for DatePicker {
                                 let text = value.map_or_else(String::new, |d| d.to_string());
                                 f.set_text(text, cx);
                             });
-                            field.read(cx).focus(window);
+                            field.update(cx, |f, cx| f.focus(window, cx));
                         }
                     },
                     window,
@@ -1237,7 +1237,7 @@ impl RenderOnce for DatePicker {
                 } else {
                     let n = generation.to_string();
                     entrance(
-                        ElementId::NamedChild(Box::new(key(&id, "slide")), n.into()),
+                        ElementId::NamedChild(std::sync::Arc::new(key(&id, "slide")), n.into()),
                         Spring::SPATIAL_FAST,
                         0.,
                         window,

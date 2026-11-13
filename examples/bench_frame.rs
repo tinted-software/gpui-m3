@@ -30,7 +30,7 @@ impl Render for Bench {
 
 fn main() {
     let shape = std::env::args().nth(1).as_deref() == Some("shape");
-    Application::new()
+    gpui_platform::application()
         .with_assets(gpui_m3::Assets)
         .run(move |cx: &mut App| {
             gpui_m3::init(cx);

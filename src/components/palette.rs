@@ -140,8 +140,8 @@ impl CommandPalette {
         self.refilter(cx);
     }
 
-    pub fn focus(&self, window: &mut Window, cx: &App) {
-        self.field.read(cx).focus(window);
+    pub fn focus(&self, window: &mut Window, cx: &mut App) {
+        self.field.update(cx, |f, cx| f.focus(window, cx));
     }
 
     fn refilter(&mut self, cx: &mut Context<Self>) {

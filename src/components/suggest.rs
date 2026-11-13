@@ -5,7 +5,7 @@ use std::ops::Range;
 use std::rc::Rc;
 
 use gpui::{
-    App, Corner, ElementId, InteractiveElement, IntoElement, KeyBinding, ParentElement, Pixels,
+    Anchor, App, ElementId, InteractiveElement, IntoElement, KeyBinding, ParentElement, Pixels,
     RenderOnce, SharedString, Styled, Window, actions, anchored, deferred, div, px,
 };
 
@@ -253,7 +253,7 @@ pub struct SuggestionList {
     selected: usize,
     width: f32,
     max_height: Pixels,
-    anchor: Option<Corner>,
+    anchor: Option<Anchor>,
     direction: PopDirection,
     on_hover: Option<ChangeHandler<usize>>,
     on_pick: Option<ChangeHandler<usize>>,
@@ -301,11 +301,11 @@ impl SuggestionList {
     /// Floats over the window from where it is placed: `corner` is the list corner that sits on
     /// that point (`BottomLeft` opens upward, above a composer). Without it the list is laid out
     /// in place.
-    pub fn anchor(mut self, corner: Corner) -> Self {
+    pub fn anchor(mut self, corner: Anchor) -> Self {
         self.anchor = Some(corner);
         self.direction = match corner {
-            Corner::TopLeft | Corner::TopRight => PopDirection::Down,
-            Corner::BottomLeft | Corner::BottomRight => PopDirection::Up,
+            Anchor::BottomLeft | Anchor::BottomCenter | Anchor::BottomRight => PopDirection::Up,
+            _ => PopDirection::Down,
         };
         self
     }
@@ -354,7 +354,10 @@ impl RenderOnce for SuggestionList {
             // Each row drops 6 px into place, 25 ms after the previous one.
             let delay = row.min(4) as f32 * 0.025;
             let p = entrance(
-                ElementId::NamedChild(Box::new(key(&self.id, "row-in")), row.to_string().into()),
+                ElementId::NamedChild(
+                    std::sync::Arc::new(key(&self.id, "row-in")),
+                    row.to_string().into(),
+                ),
                 Spring::SPATIAL,
                 delay,
                 window,
@@ -402,7 +405,7 @@ mod tests {
         bindings.extend(super::super::text_field::text_field_bindings());
         bindings.extend(suggestion_bindings());
         let keymap = Keymap::new(bindings);
-        let first = |keys: &str, context: &str| {
+        let first = |keys: &'static str, context: &str| {
             let stack = [KeyContext::parse(context).unwrap()];
             let (found, _) = keymap.bindings_for_input(&[Keystroke::parse(keys).unwrap()], &stack);
             found.first().map(|b| b.action().name())

@@ -510,7 +510,7 @@ impl RenderOnce for Button {
             .items_center()
             .when(!self.truncate || icon_only, |d| d.flex_none())
             .when(self.truncate && !icon_only, |d| {
-                d.flex_shrink().min_w_0().overflow_hidden()
+                d.flex_shrink(1.).min_w_0().overflow_hidden()
             })
             .when(icon_only, |d| d.w(px(height)))
             .justify_center()
@@ -532,7 +532,14 @@ impl RenderOnce for Button {
                 }))
             })
             // As wide as the container, aligned with the `NavItem` rows (12 px padding, 10 px gap).
-            .when(self.full_width && !icon_only, |d| d.w_full().flex_shrink().min_w_0().justify_start().px(px(12.)).gap(px(10.)))
+            .when(self.full_width && !icon_only, |d| {
+                d.w_full()
+                    .flex_shrink(1.)
+                    .min_w_0()
+                    .justify_start()
+                    .px(px(12.))
+                    .gap(px(10.))
+            })
             .corners(all(radius))
             .bg(bg)
             .text_color(fg)
@@ -613,7 +620,11 @@ impl RenderOnce for Button {
             );
         }
         if let Some(trailing) = self.trailing.filter(|_| !icon_only) {
-            el = if self.full_width { el.child(div().ml_auto().flex_none().child(trailing)) } else { el.child(trailing) };
+            el = if self.full_width {
+                el.child(div().ml_auto().flex_none().child(trailing))
+            } else {
+                el.child(trailing)
+            };
         }
         if let Some(tooltip) = tooltip {
             el = el.tooltip(super::Tooltip::text(tooltip));
@@ -636,7 +647,7 @@ impl RenderOnce for Button {
                     let timer = cx.background_executor().timer(duration);
                     cx.spawn(async move |cx| {
                         timer.await;
-                        at.update(cx, |_, cx| cx.notify()).ok();
+                        at.update(cx, |_, cx| cx.notify());
                     })
                     .detach();
                 }
@@ -1133,12 +1144,14 @@ impl RenderOnce for Fab {
             offset: gpui::point(px(0.), px(2.)),
             blur_radius: px(6.),
             spread_radius: px(0.),
+            inset: false,
         };
         let shadow_far = gpui::BoxShadow {
             color: alpha(s.shadow, 0.8),
             offset: gpui::point(px(0.), px(8.)),
             blur_radius: px(24.),
             spread_radius: px(0.),
+            inset: false,
         };
 
         let mut face = div()

@@ -938,7 +938,10 @@ impl Render<'_> {
                 0
             }
         };
-        ElementId::NamedChild(Box::new(self.id.clone()), format!("{part}{n}").into())
+        ElementId::NamedChild(
+            std::sync::Arc::new(self.id.clone()),
+            format!("{part}{n}").into(),
+        )
     }
 
     fn rich(&mut self, rich: &RichText, weight: FontWeight) -> AnyElement {
@@ -1180,9 +1183,7 @@ impl Render<'_> {
                 }
                 list.into_any_element()
             }
-            MarkdownBlock::Table { align, head, rows } => {
-                self.table(align, head, rows, window, cx)
-            }
+            MarkdownBlock::Table { align, head, rows } => self.table(align, head, rows, window, cx),
             MarkdownBlock::Rule => div()
                 .my(px(size * 0.35))
                 .h(px(1.))

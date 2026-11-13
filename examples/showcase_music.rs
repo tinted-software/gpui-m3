@@ -131,24 +131,22 @@ impl Shell {
                 let now = std::time::Instant::now();
                 let dt = (now - last).as_secs_f32();
                 last = now;
-                let finished = cx
-                    .update(|cx| {
-                        let m = model.read(cx);
-                        if !m.playing {
-                            return false;
-                        }
-                        let duration = TRACKS[m.current].secs as f32;
-                        let position = clock.read(cx).position + dt;
-                        let finished = position >= duration;
-                        clock.update(cx, |c, cx| {
-                            c.position = if finished { 0. } else { position };
-                            cx.notify();
-                        });
-                        finished
-                    })
-                    .unwrap_or(false);
+                let finished = cx.update(|cx| {
+                    let m = model.read(cx);
+                    if !m.playing {
+                        return false;
+                    }
+                    let duration = TRACKS[m.current].secs as f32;
+                    let position = clock.read(cx).position + dt;
+                    let finished = position >= duration;
+                    clock.update(cx, |c, cx| {
+                        c.position = if finished { 0. } else { position };
+                        cx.notify();
+                    });
+                    finished
+                });
                 if finished {
-                    cx.update(|cx| model.update(cx, |m, cx| m.next(cx))).ok();
+                    cx.update(|cx| model.update(cx, |m, cx| m.next(cx)));
                 }
             }
         })
@@ -532,8 +530,8 @@ fn env_f32(name: &str) -> Option<f32> {
     std::env::var(name).ok().and_then(|v| v.parse().ok())
 }
 
-fn main() {
-    Application::new()
+pub fn main() {
+    gpui_platform::application()
         .with_assets(ShowcaseAssets)
         .run(|cx: &mut App| {
             gpui_m3::init(cx);

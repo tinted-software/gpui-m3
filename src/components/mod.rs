@@ -126,7 +126,7 @@ pub(crate) fn corners(r: [f32; 4]) -> Corners<Pixels> {
 
 /// Id of a component part (e.g. the two halves of a split button).
 pub(crate) fn child_id(id: &ElementId, part: &'static str) -> ElementId {
-    ElementId::NamedChild(Box::new(id.clone()), part.into())
+    ElementId::NamedChild(std::sync::Arc::new(id.clone()), part.into())
 }
 
 /// Applies per-corner radii to an element.

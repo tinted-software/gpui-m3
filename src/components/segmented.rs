@@ -150,7 +150,7 @@ impl RenderOnce for SegmentedButtons {
         let count = self.segments.len();
         let mut row = div()
             .flex()
-            .flex_shrink()
+            .flex_shrink(1.)
             .min_w_0()
             .max_w_full()
             .gap(px(2.))

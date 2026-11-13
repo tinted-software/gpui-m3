@@ -251,7 +251,14 @@ impl RenderOnce for Shape {
                         match photo {
                             Some(photo) => {
                                 window
-                                    .paint_image(bounds, gpui::Corners::default(), photo, 0, false)
+                                    .paint_image(
+                                        bounds,
+                                        bounds,
+                                        gpui::Corners::default(),
+                                        photo,
+                                        0,
+                                        false,
+                                    )
                                     .ok();
                             }
                             None => morph.paint(bounds, color, window),

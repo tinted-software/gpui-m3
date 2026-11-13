@@ -85,15 +85,36 @@ pub(crate) fn code_editor_bindings() -> Vec<KeyBinding> {
     // Word jumps use Alt on macOS and Ctrl elsewhere.
     #[cfg(target_os = "macos")]
     let word = "alt";
+    #[cfg(target_os = "macos")]
+    macro_rules! w {
+        ($k:expr) => {
+            concat!("alt-", $k)
+        };
+    }
     #[cfg(not(target_os = "macos"))]
-    let word = "ctrl";
-    let w = |key: &str| format!("{word}-{key}");
+    macro_rules! w {
+        ($k:expr) => {
+            concat!("ctrl-", $k)
+        };
+    }
+    #[cfg(target_os = "macos")]
+    macro_rules! sec {
+        ($k:expr) => {
+            concat!("cmd-", $k)
+        };
+    }
+    #[cfg(not(target_os = "macos"))]
+    macro_rules! sec {
+        ($k:expr) => {
+            concat!("ctrl-", $k)
+        };
+    }
     vec![
         KeyBinding::new("backspace", Backspace, ctx),
         KeyBinding::new("shift-backspace", Backspace, ctx),
         KeyBinding::new("delete", Delete, ctx),
-        KeyBinding::new(&w("backspace"), DeleteWordLeft, ctx),
-        KeyBinding::new(&w("delete"), DeleteWordRight, ctx),
+        KeyBinding::new(w!("backspace"), DeleteWordLeft, ctx),
+        KeyBinding::new(w!("delete"), DeleteWordRight, ctx),
         KeyBinding::new("left", Left, ctx),
         KeyBinding::new("right", Right, ctx),
         KeyBinding::new("up", Up, ctx),
@@ -102,36 +123,36 @@ pub(crate) fn code_editor_bindings() -> Vec<KeyBinding> {
         KeyBinding::new("shift-right", SelectRight, ctx),
         KeyBinding::new("shift-up", SelectUp, ctx),
         KeyBinding::new("shift-down", SelectDown, ctx),
-        KeyBinding::new(&w("left"), WordLeft, ctx),
-        KeyBinding::new(&w("right"), WordRight, ctx),
-        KeyBinding::new(&w("shift-left"), SelectWordLeft, ctx),
-        KeyBinding::new(&w("shift-right"), SelectWordRight, ctx),
+        KeyBinding::new(w!("left"), WordLeft, ctx),
+        KeyBinding::new(w!("right"), WordRight, ctx),
+        KeyBinding::new(w!("shift-left"), SelectWordLeft, ctx),
+        KeyBinding::new(w!("shift-right"), SelectWordRight, ctx),
         KeyBinding::new("home", Home, ctx),
         KeyBinding::new("end", End, ctx),
         KeyBinding::new("shift-home", SelectHome, ctx),
         KeyBinding::new("shift-end", SelectEnd, ctx),
-        KeyBinding::new("secondary-home", DocStart, ctx),
-        KeyBinding::new("secondary-end", DocEnd, ctx),
-        KeyBinding::new("secondary-up", DocStart, ctx),
-        KeyBinding::new("secondary-down", DocEnd, ctx),
-        KeyBinding::new("secondary-shift-home", SelectDocStart, ctx),
-        KeyBinding::new("secondary-shift-end", SelectDocEnd, ctx),
+        KeyBinding::new(sec!("home"), DocStart, ctx),
+        KeyBinding::new(sec!("end"), DocEnd, ctx),
+        KeyBinding::new(sec!("up"), DocStart, ctx),
+        KeyBinding::new(sec!("down"), DocEnd, ctx),
+        KeyBinding::new(sec!("shift-home"), SelectDocStart, ctx),
+        KeyBinding::new(sec!("shift-end"), SelectDocEnd, ctx),
         KeyBinding::new("pageup", PageUp, ctx),
         KeyBinding::new("pagedown", PageDown, ctx),
         KeyBinding::new("shift-pageup", SelectPageUp, ctx),
         KeyBinding::new("shift-pagedown", SelectPageDown, ctx),
-        KeyBinding::new("secondary-a", SelectAll, ctx),
-        KeyBinding::new("secondary-c", Copy, ctx),
-        KeyBinding::new("secondary-x", Cut, ctx),
-        KeyBinding::new("secondary-v", Paste, ctx),
-        KeyBinding::new("secondary-z", Undo, ctx),
-        KeyBinding::new("secondary-shift-z", Redo, ctx),
-        KeyBinding::new("secondary-y", Redo, ctx),
+        KeyBinding::new(sec!("a"), SelectAll, ctx),
+        KeyBinding::new(sec!("c"), Copy, ctx),
+        KeyBinding::new(sec!("x"), Cut, ctx),
+        KeyBinding::new(sec!("v"), Paste, ctx),
+        KeyBinding::new(sec!("z"), Undo, ctx),
+        KeyBinding::new(sec!("shift-z"), Redo, ctx),
+        KeyBinding::new(sec!("y"), Redo, ctx),
         KeyBinding::new("enter", Newline, ctx),
         KeyBinding::new("shift-enter", Newline, ctx),
         KeyBinding::new("tab", Indent, ctx),
         KeyBinding::new("shift-tab", Outdent, ctx),
-        KeyBinding::new("secondary-s", Save, ctx),
+        KeyBinding::new(sec!("s"), Save, ctx),
         KeyBinding::new("escape", Cancel, ctx),
     ]
 }
@@ -411,8 +432,8 @@ impl CodeEditor {
         self.motion(cx, |b| b.set_selection(selection));
     }
 
-    pub fn focus(&self, window: &mut Window) {
-        window.focus(&self.focus_handle);
+    pub fn focus(&self, window: &mut Window, cx: &mut App) {
+        window.focus(&self.focus_handle, cx);
     }
 
     pub fn is_focused(&self, window: &Window) -> bool {
@@ -703,7 +724,7 @@ impl CodeEditor {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        window.focus(&self.focus_handle);
+        window.focus(&self.focus_handle, cx);
         let pos = self.pos_for_point(event.position);
         self.selecting = true;
         match event.click_count {
@@ -875,7 +896,9 @@ impl CodeEditor {
                                 selection_color,
                             ));
                         }
-                        shaped.paint(origin, lh, window, cx).ok();
+                        shaped
+                            .paint(origin, lh, gpui::TextAlign::Left, None, window, cx)
+                            .ok();
                         if let Some(x) = caret {
                             window.paint_quad(fill(
                                 Bounds::new(
@@ -1159,7 +1182,7 @@ impl Render for CodeEditor {
             self.buffer.line_count(),
             cx.processor(|this, range, window, cx| this.render_rows(range, window, cx)),
         )
-        .track_scroll(self.scroll.clone())
+        .track_scroll(&self.scroll)
         .size_full();
         // Sideways wheel deltas scroll the text horizontally (see `on_scroll_wheel`), not the list.
         list.style().restrict_scroll_to_axis = Some(true);

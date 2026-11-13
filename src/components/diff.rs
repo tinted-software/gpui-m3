@@ -97,7 +97,7 @@ fn strip_eol(line: &str) -> &str {
     line.strip_suffix('\r').unwrap_or(line)
 }
 
-fn line_diff<'a>(old: &'a str, new: &'a str) -> TextDiff<'a, 'a, 'a, str> {
+fn line_diff<'a>(old: &'a str, new: &'a str) -> TextDiff<'a, 'a, str> {
     TextDiff::configure()
         .timeout(Duration::from_millis(400))
         .diff_lines(old, new)

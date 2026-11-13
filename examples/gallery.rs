@@ -783,8 +783,8 @@ impl Render for Gallery {
             .flex()
             .key_context("Gallery")
             .track_focus(&self.focus)
-            .on_action(|_: &FocusNext, window, _| window.focus_next())
-            .on_action(|_: &FocusPrevious, window, _| window.focus_prev())
+            .on_action(|_: &FocusNext, window, cx| window.focus_next(cx))
+            .on_action(|_: &FocusPrevious, window, cx| window.focus_prev(cx))
             .bg(s.surface_container)
             .text_color(s.on_surface)
             .font_family(FONT_FAMILY)
@@ -2498,7 +2498,7 @@ impl Demos {
                             .on_click(cx.listener(|this, _, window, cx| {
                                 this.palette_open = true;
                                 this.palette.update(cx, |p, cx| p.reset(cx));
-                                this.palette.read(cx).focus(window, cx);
+                                this.palette.update(cx, |p, cx| p.focus(window, cx));
                                 cx.notify();
                             })),
                     )
@@ -2875,7 +2875,7 @@ impl Demos {
                     .query(self.mention_query.clone())
                     .selected(self.mention_nav.selected())
                     .width(420.)
-                    .anchor(gpui::Corner::BottomLeft)
+                    .anchor(gpui::Anchor::BottomLeft)
                     .on_hover(update(cx, |this: &mut Demos, row: usize, _| {
                         this.mention_nav.hover(row);
                     }))
@@ -3396,7 +3396,7 @@ impl Demos {
             },
         )
         .detach();
-        cropper.read(cx).focus(window);
+        cropper.update(cx, |c, cx| c.focus(window, cx));
         self.cropper = Some(cropper);
         cx.notify();
     }
@@ -3628,7 +3628,7 @@ fn demo_note(text: &'static str, cx: &App) -> impl IntoElement {
 }
 
 fn main() {
-    Application::new()
+    gpui_platform::application()
         .with_assets(gpui_m3::Assets)
         .run(|cx: &mut App| {
             gpui_m3::init(cx);
@@ -3669,7 +3669,7 @@ fn main() {
                     cx.new(|cx| {
                         let gallery = Gallery::new(window, cx);
                         gallery.apply_theme(cx);
-                        window.focus(&gallery.focus);
+                        window.focus(&gallery.focus, cx);
                         if let Some(section) = std::env::var("M3_SECTION")
                             .ok()
                             .and_then(|v| v.parse::<usize>().ok())

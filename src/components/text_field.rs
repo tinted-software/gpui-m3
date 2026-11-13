@@ -47,6 +47,18 @@ const KEY_CONTEXT: &str = "M3TextField";
 pub fn bind_text_field_keys(cx: &mut App) {
     cx.bind_keys(text_field_bindings());
 }
+#[cfg(target_os = "macos")]
+macro_rules! sec {
+    ($k:expr) => {
+        concat!("cmd-", $k)
+    };
+}
+#[cfg(not(target_os = "macos"))]
+macro_rules! sec {
+    ($k:expr) => {
+        concat!("ctrl-", $k)
+    };
+}
 
 pub(crate) fn text_field_bindings() -> Vec<KeyBinding> {
     let ctx = Some(KEY_CONTEXT);
@@ -57,10 +69,10 @@ pub(crate) fn text_field_bindings() -> Vec<KeyBinding> {
         KeyBinding::new("right", Right, ctx),
         KeyBinding::new("shift-left", SelectLeft, ctx),
         KeyBinding::new("shift-right", SelectRight, ctx),
-        KeyBinding::new("secondary-a", SelectAll, ctx),
-        KeyBinding::new("secondary-v", Paste, ctx),
-        KeyBinding::new("secondary-c", Copy, ctx),
-        KeyBinding::new("secondary-x", Cut, ctx),
+        KeyBinding::new(sec!("a"), SelectAll, ctx),
+        KeyBinding::new(sec!("v"), Paste, ctx),
+        KeyBinding::new(sec!("c"), Copy, ctx),
+        KeyBinding::new(sec!("x"), Cut, ctx),
         KeyBinding::new("home", Home, ctx),
         KeyBinding::new("end", End, ctx),
         KeyBinding::new("enter", Submit, ctx),
@@ -497,8 +509,8 @@ impl TextField {
     }
 
     /// Moves keyboard focus to the field.
-    pub fn focus(&self, window: &mut Window) {
-        window.focus(&self.focus_handle);
+    pub fn focus(&self, window: &mut Window, cx: &mut App) {
+        window.focus(&self.focus_handle, cx);
     }
 
     pub fn is_focused(&self, window: &Window) -> bool {
@@ -596,7 +608,7 @@ impl TextField {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        window.focus(&self.focus_handle);
+        window.focus(&self.focus_handle, cx);
         self.is_selecting = true;
         if event.modifiers.shift {
             self.select_to(self.index_for_mouse_position(event.position), cx);
@@ -873,14 +885,6 @@ struct LinePaint {
     selection: Option<PaintQuad>,
 }
 
-impl IntoElement for TextLine {
-    type Element = Self;
-
-    fn into_element(self) -> Self::Element {
-        self
-    }
-}
-
 impl Element for TextLine {
     type RequestLayoutState = ();
     type PrepaintState = LinePaint;
@@ -1027,8 +1031,15 @@ impl Element for TextLine {
             window.paint_quad(selection)
         }
         let line = prepaint.line.take().unwrap();
-        line.paint(bounds.origin, window.line_height(), window, cx)
-            .ok();
+        line.paint(
+            bounds.origin,
+            window.line_height(),
+            gpui::TextAlign::Left,
+            None,
+            window,
+            cx,
+        )
+        .ok();
 
         // The caret stays solid while typing and blinks every 0.53 s after that.
         if focus_handle.is_focused(window)

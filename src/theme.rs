@@ -552,12 +552,14 @@ impl Elevation {
                 offset: point(px(0.), px(dp * 0.5)),
                 blur_radius: px(dp * 1.5),
                 spread_radius: px(0.),
+                inset: false,
             },
             BoxShadow {
                 color: alpha(scheme.shadow, 0.7),
                 offset: point(px(0.), px(1.)),
                 blur_radius: px(2. + dp * 0.5),
                 spread_radius: px(0.),
+                inset: false,
             },
         ]
     }

@@ -4,7 +4,7 @@ use std::rc::Rc;
 
 use gpui::prelude::FluentBuilder as _;
 use gpui::{
-    AnyElement, App, BoxShadow, ClickEvent, Corner, Div, ElementId, FontWeight, Hsla,
+    Anchor, AnyElement, App, BoxShadow, ClickEvent, Div, ElementId, FontWeight, Hsla,
     InteractiveElement, IntoElement, Length, ParentElement, Pixels, RenderOnce, SharedString,
     StatefulInteractiveElement, Styled, Window, anchored, deferred, div, point, px, relative,
 };
@@ -23,12 +23,14 @@ pub fn shadow_pop(s: &Scheme) -> Vec<BoxShadow> {
             offset: point(px(0.), px(2.)),
             blur_radius: px(6.),
             spread_radius: px(0.),
+            inset: false,
         },
         BoxShadow {
             color: alpha(s.shadow, 0.85),
             offset: point(px(0.), px(10.)),
             blur_radius: px(28.),
             spread_radius: px(0.),
+            inset: false,
         },
     ]
 }
@@ -99,7 +101,7 @@ pub struct Popover {
     gap: Pixels,
     max_height: Option<Pixels>,
     direction: PopDirection,
-    anchor: Option<Corner>,
+    anchor: Option<Anchor>,
     on_dismiss: Option<ClickHandler>,
     children: Vec<AnyElement>,
 }
@@ -122,11 +124,11 @@ impl Popover {
 
     /// Floats over the window: `corner` is the popover corner that sits on the anchor point
     /// (`BottomLeft` opens up and to the right). Sets the entrance direction to match.
-    pub fn anchor(mut self, corner: Corner) -> Self {
+    pub fn anchor(mut self, corner: Anchor) -> Self {
         self.anchor = Some(corner);
         self.direction = match corner {
-            Corner::TopLeft | Corner::TopRight => PopDirection::Down,
-            Corner::BottomLeft | Corner::BottomRight => PopDirection::Up,
+            Anchor::BottomLeft | Anchor::BottomCenter | Anchor::BottomRight => PopDirection::Up,
+            _ => PopDirection::Down,
         };
         self
     }
@@ -441,7 +443,7 @@ impl RenderOnce for Menu {
                 }
                 for item in group {
                     let id = ElementId::NamedChild(
-                        Box::new(self.id.clone()),
+                        std::sync::Arc::new(self.id.clone()),
                         format!("item-{n}").into(),
                     );
                     let delay = n.min(4) as f32 * ITEM_STAGGER;

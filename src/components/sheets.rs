@@ -66,7 +66,7 @@ fn scrim_layer(
     let asked = window.use_keyed_state(key(id, "autofocus"), cx, |_, _| false);
     if !*asked.read(cx) {
         asked.update(cx, |asked, _| *asked = true);
-        window.focus(&handle);
+        window.focus(&handle, cx);
     }
     let viewport = window.viewport_size();
     let veil = if s.surface.a < 1. {

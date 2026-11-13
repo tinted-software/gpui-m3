@@ -574,7 +574,10 @@ impl Carousel {
 
 /// Id of the state of item `index`.
 fn item_key(id: &ElementId, index: usize) -> ElementId {
-    ElementId::NamedChild(Box::new(id.clone()), format!("item-{index}").into())
+    ElementId::NamedChild(
+        std::sync::Arc::new(id.clone()),
+        format!("item-{index}").into(),
+    )
 }
 
 impl RenderOnce for Carousel {
@@ -788,7 +791,7 @@ impl RenderOnce for Carousel {
                         {
                             return;
                         }
-                        window.focus(&handle);
+                        window.focus(&handle, cx);
                         st.update(cx, |sc, cx| {
                             sc.begin_drag(along(e.position), Instant::now());
                             cx.notify();

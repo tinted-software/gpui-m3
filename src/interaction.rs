@@ -309,7 +309,7 @@ pub fn keyboard_focus(
     if autofocus && !handle.is_focused(window) {
         if !*asked.read(cx) {
             asked.update(cx, |asked, _| *asked = true);
-            window.focus(&handle);
+            window.focus(&handle, cx);
         }
     }
     let ring = focus_ring(id, ring_visible, radii, window, cx);
